@@ -7,12 +7,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define SEND_DATA_SOCKET_INITIALISE_ERROR 9999
 #define INITIALISATION_ERROR 9999
-#define DIE(assertion, message)                                                         \
-if(assertion)                                                                           \
-{                                                                                       \
-    std::cerr << "Error at line " << __LINE__ << " in file " << __FILE__ << "!\n;";     \
-    std::cerr << message;                                                               \
-    std::exit(-1);                                                                      \
+#define DIE(assertion, message)                                                                                                 \
+if(assertion)                                                                                                                                    \
+{                                                                                                                                                        \
+    std::cerr << "Error at line " << __LINE__ << " in file " << __FILE__ << "!\n;";                       \
+    std::cerr << message;                                                                                                                   \
+    std::exit(-1);                                                                                                                                   \
 }
 
 // Libraries
@@ -38,7 +38,8 @@ int aux = 0;
 #pragma comment(lib, "Ws2_32.lib")
 
 // Initialise global variables, try starting the server
-int initialiseGlobal()
+int
+initialiseGlobal()
 {
     //----------------------
     // Initialize Winsock
@@ -57,7 +58,7 @@ int initialiseGlobal()
         return SEND_DATA_SOCKET_INITIALISE_ERROR;
     }
 
-    u_long mode = 1;  // 1 to enable non-blocking socket
+    u_long mode = 1; // 1 to enable non-blocking socket
     ioctlsocket(SendSocket, FIONBIO, &mode);
 
     //---------------------------------------------
@@ -67,25 +68,25 @@ int initialiseGlobal()
     RecvAddr.sin_family = AF_INET;
     RecvAddr.sin_port = htons(Port);
     RecvAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    
+
     return 0;
 }
 
 // Send to
-int sendTo()
+int
+sendTo()
 {
     //---------------------------------------------
     // Send a datagram to the receiver
     wprintf(L"\nSending a datagram to the receiver...\n");
     strcpy(SendBuf, "Hello! Client here! Nice to meet you!");
-    iResult = sendto(SendSocket,
-        SendBuf, BufLen, 0, (SOCKADDR*)&RecvAddr, sizeof(RecvAddr));
+    iResult = sendto(SendSocket, SendBuf, BufLen, 0, (SOCKADDR*)&RecvAddr,
+        sizeof(RecvAddr));
     if (iResult == SOCKET_ERROR) {
         if (WSAGetLastError() == WSAEWOULDBLOCK) {
             return 1;
         }
-        else
-        {
+        else {
             wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
             closesocket(SendSocket);
             WSACleanup();
@@ -95,21 +96,21 @@ int sendTo()
 }
 
 // Receive message
-void receiveFrom()
+void
+receiveFrom()
 {
     //-----------------------------------------------
     // Call the recvfrom function to receive datagrams
     // on the bound socket.
     wprintf(L"Receiving answer from server...\n");
-    iResult = recvfrom(SendSocket,
-        RecvBuf, BufLen, 0, (SOCKADDR*)&SenderAddr, &SenderAddrSize);
-   
-    if (iResult > 0)
-    {
+    iResult = recvfrom(SendSocket, RecvBuf, BufLen, 0, (SOCKADDR*)&SenderAddr,
+        &SenderAddrSize);
+
+    if (iResult > 0) {
         std::cout << "Received: " << RecvBuf << "\n";
         aux++;
     }
-    else  if (iResult == SOCKET_ERROR & iResult != WSAEWOULDBLOCK) {
+    else if (iResult == SOCKET_ERROR & iResult != WSAEWOULDBLOCK) {
         if (WSAGetLastError() == 10054 || WSAGetLastError() == 10035)
             wprintf(L"Server is not open!\n");
         else
@@ -118,22 +119,24 @@ void receiveFrom()
 }
 
 // Limit fps
-void sleepClient()
+void
+sleepClient()
 {
     Sleep(2000);
 }
 
 // Update game ( send messages to server )
-void update()
+void
+update()
 {
-        sendTo();
-        wprintf(L"Waiting for answer...\n");
-        receiveFrom();
-    
+    sendTo();
+    wprintf(L"Waiting for answer...\n");
+    receiveFrom();
 }
 
 // Close the client
-int closeClient()
+int
+closeClient()
 {
     //---------------------------------------------
     // When the application is finished sending, close the socket.
@@ -147,7 +150,8 @@ int closeClient()
 }
 
 // Exit
-void cleanUp()
+void
+cleanUp()
 {
     //---------------------------------------------
     // Clean up and quit.
@@ -155,10 +159,12 @@ void cleanUp()
     WSACleanup();
 }
 
-int main()
+int
+main()
 {
     // Initialisation
-    DIE(initialiseGlobal() == SEND_DATA_SOCKET_INITIALISE_ERROR, "Couldn't create client's socket!");
+    DIE(initialiseGlobal() == SEND_DATA_SOCKET_INITIALISE_ERROR,
+        "Couldn't create client's socket!");
 
     // Main loop
     while (true) {
