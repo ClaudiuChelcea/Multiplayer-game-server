@@ -4,12 +4,13 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #define INITIALISATION_ERROR 9999
 #define SERVER_CLOSE_ERROR -9999
 #define DIE(assertion, message)                                                         \
 if(assertion)                                                                           \
 {                                                                                       \
-    std::cerr << "Error at line " << __LINE__ << " in file " << __FILE__ << "!\n";      \
+    std::cerr << "Error at line " << __LINE__ << " in file " << __FILE__ << "!\n;";     \
     std::cerr << message;                                                               \
     std::exit(-1);                                                                      \
 }
@@ -18,6 +19,8 @@ if(assertion)                                                                   
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #include <stdio.h>
+#include <vector>
+#include <string>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -36,6 +39,21 @@ char RecvBuf[1024];
 int BufLen = 1024;
 struct sockaddr_in SenderAddr;
 int SenderAddrSize = sizeof(SenderAddr);
+
+// Send answer variables
+sockaddr_in vector_sock[100];
+char vector_adrese[100][100];
+int numar_adrese = 0;
+int flag = 0;
+char SendBuf[1024];
+char* ip = NULL;
+int aux = 0;
+std::vector<std::pair<char*, int>> clients;
+bool established_connection = false;
+bool waiting_for_answer = true;
+
+// Forward declarations
+int send_to();
 
 // Link with ws2_32.lib
 #pragma comment(lib, "Ws2_32.lib")
@@ -57,6 +75,10 @@ int initialiseGlobal()
         wprintf(L"socket failed with error %d\n", WSAGetLastError());
         return INITIALISATION_ERROR;
     }
+
+    u_long mode = 1;  // 1 to enable non-blocking socket
+    ioctlsocket(RecvSocket, FIONBIO, &mode);
+
     //-----------------------------------------------
     // Bind the socket to any address and the specified port.
     RecvAddr.sin_family = AF_INET;
@@ -69,6 +91,37 @@ int initialiseGlobal()
         wprintf(L"bind failed with error %d\n", WSAGetLastError());
         return INITIALISATION_ERROR;
     }
+
+    return -1;
+}
+
+// Create clients list
+void ClientsList()
+{
+    std::pair<char*, int> data;
+
+    data.first = ip;
+    data.second = SenderAddr.sin_port;
+
+    // Count if the client exists
+    int counter = 0;
+    for (int i = 0; i < clients.size(); ++i)
+    {
+        if (clients[i].first == ip)
+        {
+            counter = 1;
+        }
+    }
+
+    if (counter == 1)
+    {
+        printf("\nAlready connected client!\n");
+    }
+    else
+    {
+        clients.push_back(data);
+        printf("\nAdded client!\n");
+    }
 }
 
 // Receive message
@@ -77,11 +130,38 @@ void receiveFrom()
     //-----------------------------------------------
     // Call the recvfrom function to receive datagrams
     // on the bound socket.
-    wprintf(L"Receiving datagrams...\n");
+    if (waiting_for_answer == true)
+    {
+        wprintf(L"\nWaiting for datagrams...\n");
+        waiting_for_answer = false;
+    }
+
     iResult = recvfrom(RecvSocket,
         RecvBuf, BufLen, 0, (SOCKADDR*)&SenderAddr, &SenderAddrSize);
+
+    if (iResult > 0)
+    {
+        std::cout << "\nMessage received: " << RecvBuf << "\n";
+        ip = inet_ntoa(SenderAddr.sin_addr);
+        std::cout << "From the client with IP " << ip << " port " << SenderAddr.sin_port << ".";
+        ClientsList();
+        aux++;
+        waiting_for_answer = true;
+    }
+
     if (iResult == SOCKET_ERROR) {
-        wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+        if (WSAGetLastError() == WSAEWOULDBLOCK)
+        {
+            return;
+        }
+        else if (WSAGetLastError() == 10054)
+        {
+            wprintf(L"Client not open!\n");
+        }
+        else
+        {
+            wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+        }
     }
 }
 
@@ -91,15 +171,52 @@ void sleepServer()
     Sleep(2000);
 }
 
+// Send to
+int send_to()
+{
+    if (established_connection == false)
+    {
+        wprintf(L"Connection successfully established!\n");
+        established_connection = true;
+    }
+    strcpy(SendBuf, "Hello from the server!");
+
+    //---------------------------------------------
+    // Send a datagram to the receiver
+    iResult = sendto(RecvSocket,
+        SendBuf, BufLen, 0, (SOCKADDR*)&SenderAddr, sizeof(SenderAddr));
+
+    if (iResult == SOCKET_ERROR) {
+        if (WSAGetLastError() == WSAEWOULDBLOCK) {
+            return 1;
+        }
+        else
+        {
+            wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+            closesocket(RecvSocket);
+            WSACleanup();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 // Receive message
 void update()
 {
-    // Unblock socket if we receive no data
-    if (WSAGetLastError() == WSAEWOULDBLOCK) {
-        wprintf(L"No data received!");
-        return;
+    
+
+    // Send or receive alternately
+    if (aux == 0)
+    {
+        receiveFrom();
     }
-    receiveFrom();
+    if (aux == 1)
+    {
+        int a = send_to();
+        aux = 0;
+    }
 }
 
 // Close the server

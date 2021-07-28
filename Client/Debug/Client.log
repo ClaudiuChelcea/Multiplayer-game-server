@@ -1,0 +1,5 @@
+﻿  Client.cpp
+C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Client\Client.cpp(112,66): warning C4554: '&': check operator precedence for possible error; use parentheses to clarify precedence
+C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Client\Client.cpp(95): warning C4715: 'sendTo': not all control paths return a value
+C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Client\Client.cpp(147): warning C4715: 'closeClient': not all control paths return a value
+  Client.vcxproj -> C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Client\Debug\Client.exe

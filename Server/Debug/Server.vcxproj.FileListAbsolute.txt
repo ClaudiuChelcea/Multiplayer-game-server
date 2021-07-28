@@ -1,0 +1,2 @@
+C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Server\Debug\Server.exe
+C:\Users\claudiu.chelcea\Desktop\Multiplayer-game-server\Server\Debug\Server.pdb
