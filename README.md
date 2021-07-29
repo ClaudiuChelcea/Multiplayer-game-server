@@ -1,3 +1,3 @@
-# Multiplayer-game-server
+# Server & Client projects
 
-"Multiplayer Explained" workshop held by Gameloft - server app using winsock.
+"Multiplayer Explained" workshop held by Gameloft - server & client app using winsock.
