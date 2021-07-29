@@ -1,2 +1,3 @@
 # Multiplayer-game-server
-This repository holds the implementation for a server-client interaction in C++.
+
+"Multiplayer Explained" workshop held by Gameloft - server app using winsock.
